@@ -10,7 +10,7 @@ class ServerTab(ttk.Frame):
         super().__init__(parent)
         self.app = app
 
-        # 서버 상태 변수 (이 탭 내부에서만 관리해도 됨)
+        # 서버 상태 변수
         self.server_socket = None
         self.server_running = False
         self.clients = []

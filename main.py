@@ -13,7 +13,7 @@ from tab_sfc import SFCTab
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("스마트 네트워크 서비스 (Modular Ver.)")
+        self.title("스마트 네트워크 서비스")
         self.geometry("1100x750")
 
         # --- 공용 상태 변수 (서로 다른 탭끼리 공유할 데이터) ---
