@@ -137,14 +137,14 @@ class SFCTab(ttk.Frame):
         nat = int(self.var_nat.get())
         h2 = int(self.var_h2.get())
 
-        # Flow 1: Host1에서 오면 -> 방화벽(fw)으로 보내라
-        self.send_flow(match={"in_port": h1}, actions=[{"port": fw}])
-
-        # Flow 2: 방화벽(fw)에서 오면 -> NAT로 보내라 (여기서는 단순 포트 포워딩으로 구현)
-        self.send_flow(match={"in_port": fw}, actions=[{"port": nat}])
-
-        # Flow 3: NAT에서 오면 -> Host2(목적지)로 보내라
-        self.send_flow(match={"in_port": nat}, actions=[{"port": h2}])
+        # Flow 1: h1 -> fw
+        self.send_flow(match={"in_port": h1}, actions=[{"type": "OUTPUT", "port": fw}])
+        
+        # Flow 2: fw -> nat
+        self.send_flow(match={"in_port": fw}, actions=[{"type": "OUTPUT", "port": nat}])
+        
+        # Flow 3: nat -> h2
+        self.send_flow(match={"in_port": nat}, actions=[{"type": "OUTPUT", "port": h2}])
 
     def sfc_bypass(self):
         """바이패스: 중간 장비 무시하고 h1 -> h2 바로 연결"""
@@ -154,7 +154,7 @@ class SFCTab(ttk.Frame):
         h2 = int(self.var_h2.get())
 
         # 중간 단계(fw, nat) 무시하고 바로 목적지로 쏨
-        self.send_flow(match={"in_port": h1}, actions=[{"port": h2}])
+        self.send_flow(match={"in_port": h1}, actions=[{"type": "OUTPUT", "port": h2}])
 
     def sfc_dump(self):
         """현재 스위치에 설치된 플로우 조회"""
