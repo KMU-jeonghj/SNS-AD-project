@@ -164,7 +164,6 @@ class DiagTab(ttk.Frame):
             self.log(f"Original: {val} (Hex: {hex(val)})")
 
             endian = "Little Endian" if sys.byteorder == 'little' else "Big Endian"
-            self.log(f"System: {endian} <-> Network: Big Endian")
 
             self.log(f"htons() -> {n_val} (Hex: {hex(n_val)})")
             self.log(f"ntohs() -> {h_val} (Hex: {hex(h_val)})")
