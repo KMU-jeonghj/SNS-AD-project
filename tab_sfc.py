@@ -151,17 +151,12 @@ class SFCTab(ttk.Frame):
         h1 = int(self.var_h1.get())
         h2 = int(self.var_h2.get())
 
+        # 바로 h2 로 포워딩
 
-<< << << < HEAD
-       # 바로 h2 로 포워딩
-   self.add_flow(match={"in_port": h1}, actions=[{"port": h2}])
-== == == =
-   # 중간 단계(fw, nat) 무시하고 바로 목적지로 쏨
-   self.send_flow(match={"in_port": h1}, actions=[
-                  {"type": "OUTPUT", "port": h2}])
->>>>>> > 031f204b74e2e41c96726a24027c29a6cc9e0778
+        self.send_flow(match={"in_port": h1}, actions=[
+                       {"type": "OUTPUT", "port": h2}])
 
-   def sfc_get_flows(self):
+    def sfc_get_flows(self):
         """현재 스위치에 설치된 플로우 조회"""
         if not HAS_REQ:
             return
