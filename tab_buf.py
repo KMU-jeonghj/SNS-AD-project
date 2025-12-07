@@ -27,7 +27,7 @@ class BufTab(ttk.Frame):
         self.out.pack(fill="both", expand=True)
 
     def check_client_socket(self):
-        """1. 현재 연결된 클라이언트 소켓의 버퍼 크기 확인"""
+        """현재 연결된 클라이언트 소켓의 버퍼 크기 확인"""
         log_enter(self.out, "\n>>> [1] 클라이언트 소켓 버퍼 조회")
 
         if self.app.client_connected and self.app.client_socket:
@@ -47,7 +47,7 @@ class BufTab(ttk.Frame):
             log_enter(self.out, "(먼저 'TCP 클라이언트' 탭에서 접속해주세요)")
 
     def check_temp_socket(self):
-        """2. 임시 소켓을 만들어 OS 기본 버퍼 크기 확인"""
+        """ 임시 소켓을 만들어 OS 기본 버퍼 크기 확인"""
         log_enter(self.out, "\n>>> [2] 임시 소켓(OS 기본값) 버퍼 조회")
 
         try:

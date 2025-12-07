@@ -69,32 +69,26 @@ class DiagTab(ttk.Frame):
         ttk.Button(row_hton, text="바이트 변환 (htons)", command=self.do_hton).pack(
             side="left", padx=4, fill="x", expand=True)
 
-        # IPv4 pton
+        #  IPv4 pton
         ttk.Label(
-            left, text="inet_pton (IPv4)").pack(anchor="w", pady=(5, 0))
+            left, text="inet_pton (IPv4 -> Hex)").pack(anchor="w", pady=(5, 0))
         row_v4 = ttk.Frame(left)
         row_v4.pack(fill="x", pady=2)
         self.var_pton_v4 = tk.StringVar(value="127.0.0.1")
-
         ttk.Entry(row_v4, textvariable=self.var_pton_v4, width=25).pack(
             side="left", fill="x", expand=True)
-
-        ttk.Button(row_v4, text="변환", command=self.do_pton_v4).pack(
+        ttk.Button(row_v4, text="IPv4 변환", command=self.do_pton_v4).pack(
             side="left", padx=4)
 
-        # IPv6 pton
+        #  IPv6 pton
         ttk.Label(
-            left, text="inet_pton (IPv6)").pack(anchor="w", pady=(2, 0))
+            left, text="inet_pton (IPv6 -> Hex)").pack(anchor="w", pady=(2, 0))
         row_v6 = ttk.Frame(left)
         row_v6.pack(fill="x", pady=2)
-
-        # IPv6 기본값
-        self.var_pton_v6 = tk.StringVar(
-            value="2001:0db8:85a3:08d3:1319:8a2e:0370:7334")
-
+        self.var_pton_v6 = tk.StringVar(value="2001:db8::1")
         ttk.Entry(row_v6, textvariable=self.var_pton_v6, width=25).pack(
             side="left", fill="x", expand=True)
-        ttk.Button(row_v6, text="변환", command=self.do_pton_v6).pack(
+        ttk.Button(row_v6, text="IPv6 변환", command=self.do_pton_v6).pack(
             side="left", padx=4)
 
         ttk.Separator(left, orient="horizontal").pack(fill="x", pady=10)
@@ -104,15 +98,28 @@ class DiagTab(ttk.Frame):
         # ========================================================
         ttk.Label(left, text="[DNS/이름 변환]").pack(anchor="w", pady=(0, 5))
 
-        self.var_dns = tk.StringVar(value="dns.google")
-        ttk.Entry(left, textvariable=self.var_dns).pack(fill="x", pady=2)
+        #  정방향 조회 (도메인 -> IP)
+        ttk.Label(left, text="정방향 (Domain -> IP)").pack(anchor="w", pady=(5, 0))
+        row_dns_fwd = ttk.Frame(left)
+        row_dns_fwd.pack(fill="x", pady=2)
 
-        row_dns = ttk.Frame(left)
-        row_dns.pack(fill="x", pady=2)
-        ttk.Button(row_dns, text="정방향 조회", command=self.do_dns_forward).pack(
-            side="left", fill="x", expand=True, padx=(0, 2))
-        ttk.Button(row_dns, text="역방향 조회", command=self.do_dns_reverse).pack(
-            side="left", fill="x", expand=True, padx=(2, 0))
+        self.var_dns_fwd = tk.StringVar(value="www.google.com")
+        ttk.Entry(row_dns_fwd, textvariable=self.var_dns_fwd,
+                  width=25).pack(side="left", fill="x", expand=True)
+        ttk.Button(row_dns_fwd, text="조회", command=self.do_dns_forward).pack(
+            side="left", padx=4)
+
+        #  역방향 조회 (IP -> 도메인)
+        ttk.Label(left, text="역방향 (IP -> Domain)").pack(anchor="w", pady=(2, 0))
+        row_dns_rev = ttk.Frame(left)
+        row_dns_rev.pack(fill="x", pady=2)
+
+        # 역방향 조회를 위해 8.8.8.8 (Google DNS)을 기본값으로 설정
+        self.var_dns_rev = tk.StringVar(value="8.8.8.8")
+        ttk.Entry(row_dns_rev, textvariable=self.var_dns_rev,
+                  width=25).pack(side="left", fill="x", expand=True)
+        ttk.Button(row_dns_rev, text="조회", command=self.do_dns_reverse).pack(
+            side="left", padx=4)
 
     # --- 기능 구현 ---
 
@@ -164,6 +171,7 @@ class DiagTab(ttk.Frame):
             self.log(f"Original: {val} (Hex: {hex(val)})")
 
             endian = "Little Endian" if sys.byteorder == 'little' else "Big Endian"
+            self.log(f"System: {endian} <-> Network: Big Endian")
 
             self.log(f"htons() -> {n_val} (Hex: {hex(n_val)})")
             self.log(f"ntohs() -> {h_val} (Hex: {hex(h_val)})")
@@ -178,7 +186,6 @@ class DiagTab(ttk.Frame):
         ip_str = self.var_pton_v4.get().strip()
         self.log(f">>> [IPv4 pton] '{ip_str}' 변환")
         try:
-            # AF_INET = IPv4
             packed = socket.inet_pton(socket.AF_INET, ip_str)
             self.log(f"결과(Hex): {packed.hex()}")
             self.log(f"길이: {len(packed)} bytes (32 bit)")
@@ -192,7 +199,6 @@ class DiagTab(ttk.Frame):
         ip_str = self.var_pton_v6.get().strip()
         self.log(f">>> [IPv6 pton] '{ip_str}' 변환")
         try:
-            # AF_INET6 = IPv6
             packed = socket.inet_pton(socket.AF_INET6, ip_str)
             self.log(f"결과(Hex): {packed.hex()}")
             self.log(f"길이: {len(packed)} bytes (128 bit)")
@@ -202,7 +208,8 @@ class DiagTab(ttk.Frame):
             self.log(f"[오류] {e}")
 
     def do_dns_forward(self):
-        domain = self.var_dns.get()
+        """정방향 조회 (도메인 입력 -> IP 출력)"""
+        domain = self.var_dns_fwd.get().strip()
         self.log(f">>> DNS 정방향 조회: {domain}")
         try:
             ip = socket.gethostbyname(domain)
@@ -211,19 +218,25 @@ class DiagTab(ttk.Frame):
             self.log(f"[실패] {e}")
 
     def do_dns_reverse(self):
-        target = self.var_dns.get()
+        """역방향 조회 (IP 입력 -> 도메인 출력)"""
+        target = self.var_dns_rev.get().strip()
         self.log(f">>> DNS 역방향 조회(PTR): {target}")
         try:
+            # 입력값이 IP인지 확인
             try:
                 socket.inet_aton(target)
                 ip = target
             except:
+                # IP가 아니면 DNS 조회를 통해 IP를 먼저 얻음
+                self.log(f"(입력값이 도메인 같음 -> IP로 변환 시도)")
                 ip = socket.gethostbyname(target)
-                self.log(f"(IP 변환: {ip})")
+                self.log(f"변환된 IP: {ip}")
 
+            # 역방향 조회
             name, alias, addresslist = socket.gethostbyaddr(ip)
             self.log(f"결과(Domain): {name}")
             if alias:
                 self.log(f"별칭: {alias}")
+
         except Exception as e:
-            self.log(f"[실패] 호스트 이름 없음: {e}")
+            self.log(f"[실패] 호스트 정보를 찾을 수 없음: {e}")
