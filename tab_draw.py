@@ -12,19 +12,19 @@ class DrawTab(ttk.Frame):
     def _build_ui(self):
         info = ttk.Frame(self, padding=8)
         info.pack(fill="x")
-        ttk.Label(info, text="그림판 - 접속 상태면 서버로 전송됨").pack(side="left")
+        ttk.Label(info, text="그림판 -  드래그 시 선, (옵션) 네트워크 브로드캐스트").pack(side="left")
 
         self.canvas = tk.Canvas(self, bg="white")
         self.canvas.pack(fill="both", expand=True, padx=5, pady=5)
 
         self.canvas.bind("<ButtonPress-1>", self._start)
-        self.canvas.bind("<B1-Motion>", self._move)
+        self.canvas.bind("<B1-Motion>", self._draw_move)
         self.canvas.bind("<ButtonRelease-1>", self._end)
 
     def _start(self, e): self._last_xy = (e.x, e.y)
     def _end(self, e): self._last_xy = None
 
-    def _move(self, e):
+    def _draw_move(self, e):
         if not self._last_xy:
             return
         x1, y1 = self._last_xy
@@ -33,7 +33,7 @@ class DrawTab(ttk.Frame):
         # 내 화면에 그리기
         self.canvas.create_line(x1, y1, x2, y2, width=2, capstyle="round")
 
-        # 접속 중이면 서버로 전송 (App의 소켓 사용)
+        # 접속 중이면 서버로 전송
         if self.app.client_connected and self.app.client_socket:
             msg = f"DRAW:{x1},{y1},{x2},{y2}"
             try:
@@ -46,9 +46,9 @@ class DrawTab(ttk.Frame):
     def draw_remote(self, text):
         """서버에서 받은 좌표 데이터로 그리기"""
         try:
-            # 형식: DRAW:x1,y1,x2,y2
             coords = text.replace("DRAW:", "").strip().split(",")
             x1, y1, x2, y2 = map(int, coords)
+            # 빨간 색으로 구별
             self.canvas.create_line(
                 x1, y1, x2, y2, width=2, fill="red", capstyle="round")
         except:

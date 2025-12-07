@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 import json
-from utils import log_to_widget
+from utils import log_enter
 
-# requests 모듈 체크
+# requests 모듈
 try:
     import requests
     HAS_REQ = True
@@ -18,11 +18,10 @@ class SFCTab(ttk.Frame):
         self._build_ui()
 
     def _build_ui(self):
-        # --- 상단 컨트롤 패널 (스켈레톤 UI 구조 반영) ---
         panel = ttk.Frame(self, padding=10)
         panel.pack(fill="x")
 
-        # 1행: Ryu 주소 및 DPID/Priority 설정
+        #  Ryu 주소 및 DPID/Priority 설정
         self.var_rest_host = tk.StringVar(value="127.0.0.1")
         self.var_rest_port = tk.StringVar(value="8080")
         self.var_dpid = tk.StringVar(value="1")
@@ -45,7 +44,6 @@ class SFCTab(ttk.Frame):
         ttk.Entry(row1, textvariable=self.var_prio,
                   width=5).pack(side="left", padx=2)
 
-        # 2행: 포트 매핑 (SFC 경로 설정용)
         # 기본값: h1(1번) -> fw(2번) -> nat(3번) -> h2(4번)
         self.var_h1 = tk.StringVar(value="1")
         self.var_fw = tk.StringVar(value="2")
@@ -55,7 +53,6 @@ class SFCTab(ttk.Frame):
         row2 = ttk.Frame(panel)
         row2.pack(fill="x", pady=5)
 
-        # Grid 레이아웃으로 포트 입력 배치 (스켈레톤 스타일)
         ports_frame = ttk.Frame(row2)
         ports_frame.pack(side="left")
 
@@ -75,29 +72,28 @@ class SFCTab(ttk.Frame):
         ttk.Entry(ports_frame, textvariable=self.var_h2,
                   width=4).grid(row=0, column=7, padx=2)
 
-        # 3행: 버튼들 (설치, 바이패스, 조회, 삭제)
         row3 = ttk.Frame(panel)
         row3.pack(fill="x", pady=5)
 
-        ttk.Button(row3, text="SFC 설치 (Chain)",
+        ttk.Button(row3, text="SFC 설치",
                    command=self.sfc_install).pack(side="left", padx=2)
-        ttk.Button(row3, text="바이패스 (Direct)",
+        ttk.Button(row3, text="바이패스",
                    command=self.sfc_bypass).pack(side="left", padx=2)
-        ttk.Button(row3, text="플로우 조회", command=self.sfc_dump).pack(
+        ttk.Button(row3, text="플로우 조회", command=self.sfc_get_flows).pack(
             side="left", padx=2)
-        ttk.Button(row3, text="플로우 삭제 (Reset)",
+        ttk.Button(row3, text="플로우 삭제",
                    command=self.sfc_delete).pack(side="left", padx=2)
 
-        # --- 하단 로그창 ---
+        # 로그창
         self.out = scrolledtext.ScrolledText(self, height=15)
         self.out.pack(fill="both", expand=True, padx=5, pady=5)
 
-    def log(self, s): log_to_widget(self.out, s)
+    def log(self, s): log_enter(self.out, s)
 
     def get_base_url(self):
         return f"http://{self.var_rest_host.get()}:{self.var_rest_port.get()}"
 
-    def send_flow(self, match, actions):
+    def add_flow(self, match, actions):
         if not HAS_REQ:
             self.log("Error: requests 모듈 없음")
             return
@@ -106,6 +102,7 @@ class SFCTab(ttk.Frame):
         dpid = int(self.var_dpid.get())
         prio = int(self.var_prio.get())
 
+        # flow table
         payload = {
             "dpid": dpid,
             "cookie": 1,
@@ -129,7 +126,7 @@ class SFCTab(ttk.Frame):
     # --- 기능 구현 ---
 
     def sfc_install(self):
-        """SFC 체이닝: h1 -> fw -> nat -> h2 순서로 강제 이동"""
+        """SFC 체이닝: h1 -> fw -> nat -> h2 순서"""
         self.log(f"\n>>> SFC 설치 (h1->fw->nat->h2)")
 
         h1 = int(self.var_h1.get())
@@ -137,14 +134,12 @@ class SFCTab(ttk.Frame):
         nat = int(self.var_nat.get())
         h2 = int(self.var_h2.get())
 
-        # Flow 1: Host1에서 오면 -> 방화벽(fw)으로 보내라
-        self.send_flow(match={"in_port": h1}, actions=[{"port": fw}])
+        # flow modificaion
+        self.add_flow(match={"in_port": h1}, actions=[{"port": fw}])
 
-        # Flow 2: 방화벽(fw)에서 오면 -> NAT로 보내라 (여기서는 단순 포트 포워딩으로 구현)
-        self.send_flow(match={"in_port": fw}, actions=[{"port": nat}])
+        self.add_flow(match={"in_port": fw}, actions=[{"port": nat}])
 
-        # Flow 3: NAT에서 오면 -> Host2(목적지)로 보내라
-        self.send_flow(match={"in_port": nat}, actions=[{"port": h2}])
+        self.add_flow(match={"in_port": nat}, actions=[{"port": h2}])
 
     def sfc_bypass(self):
         """바이패스: 중간 장비 무시하고 h1 -> h2 바로 연결"""
@@ -153,10 +148,10 @@ class SFCTab(ttk.Frame):
         h1 = int(self.var_h1.get())
         h2 = int(self.var_h2.get())
 
-        # 중간 단계(fw, nat) 무시하고 바로 목적지로 쏨
-        self.send_flow(match={"in_port": h1}, actions=[{"port": h2}])
+        # 바로 h2 로 포워딩
+        self.add_flow(match={"in_port": h1}, actions=[{"port": h2}])
 
-    def sfc_dump(self):
+    def sfc_get_flows(self):
         """현재 스위치에 설치된 플로우 조회"""
         if not HAS_REQ:
             return
@@ -183,7 +178,6 @@ class SFCTab(ttk.Frame):
             return
 
         dpid = self.var_dpid.get()
-        # 모든 플로우를 지우는 명령
         url = self.get_base_url() + f"/stats/flowentry/clear/{dpid}"
         self.log(f"\n>>> 플로우 전체 삭제 요청")
 
@@ -191,7 +185,7 @@ class SFCTab(ttk.Frame):
             # delete 메소드 사용
             resp = requests.delete(url, timeout=2)
             if resp.status_code == 200:
-                self.log("[삭제 성공] 모든 규칙이 초기화되었습니다.")
+                self.log("모든 플로우가 초기화되었습니다.")
             else:
                 self.log(f"[실패] {resp.status_code} {resp.text}")
         except Exception as e:

@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-# 분리한 모듈들 import
+# 모듈 import
 from tab_diag import DiagTab
 from tab_server import ServerTab
 from tab_client import ClientTab
@@ -16,15 +16,14 @@ class App(tk.Tk):
         self.title("스마트 네트워크 서비스")
         self.geometry("1100x750")
 
-        # --- 공용 상태 변수 (서로 다른 탭끼리 공유할 데이터) ---
+        # 공용 상태 변수
         self.client_socket = None
         self.client_connected = False
 
-        # --- 탭 구성 ---
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True)
 
-        # 각 탭 생성 및 추가 (self를 넘겨서 App의 변수에 접근하게 함)
+        # 각 탭 생성 및 추가
         self.tab_diag = DiagTab(self.notebook, self)
         self.notebook.add(self.tab_diag, text="네트워크 진단")
 
