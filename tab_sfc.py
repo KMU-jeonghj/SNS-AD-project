@@ -152,7 +152,6 @@ class SFCTab(ttk.Frame):
         h2 = int(self.var_h2.get())
 
         # 바로 h2 로 포워딩
-
         self.send_flow(match={"in_port": h1}, actions=[
                        {"type": "OUTPUT", "port": h2}])
 
