@@ -66,7 +66,7 @@ class DiagTab(ttk.Frame):
         self.var_hton_val = tk.StringVar(value="9000")
         ttk.Entry(row_hton, textvariable=self.var_hton_val,
                   width=8).pack(side="left")
-        ttk.Button(row_hton, text="바이트 변환 (htons)", command=self.do_hton).pack(
+        ttk.Button(row_hton, text="바이트 변환", command=self.do_hton).pack(
             side="left", padx=4, fill="x", expand=True)
 
         #  IPv4 pton
@@ -103,7 +103,7 @@ class DiagTab(ttk.Frame):
         row_dns_fwd = ttk.Frame(left)
         row_dns_fwd.pack(fill="x", pady=2)
 
-        self.var_dns_fwd = tk.StringVar(value="www.google.com")
+        self.var_dns_fwd = tk.StringVar(value="dns.google")
         ttk.Entry(row_dns_fwd, textvariable=self.var_dns_fwd,
                   width=25).pack(side="left", fill="x", expand=True)
         ttk.Button(row_dns_fwd, text="조회", command=self.do_dns_forward).pack(
