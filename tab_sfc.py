@@ -134,12 +134,15 @@ class SFCTab(ttk.Frame):
         nat = int(self.var_nat.get())
         h2 = int(self.var_h2.get())
 
-        # flow modificaion
-        self.add_flow(match={"in_port": h1}, actions=[{"port": fw}])
+        # Flow modification
+        self.send_flow(match={"in_port": h1}, actions=[
+                       {"type": "OUTPUT", "port": fw}])
 
-        self.add_flow(match={"in_port": fw}, actions=[{"port": nat}])
+        self.send_flow(match={"in_port": fw}, actions=[
+                       {"type": "OUTPUT", "port": nat}])
 
-        self.add_flow(match={"in_port": nat}, actions=[{"port": h2}])
+        self.send_flow(match={"in_port": nat}, actions=[
+                       {"type": "OUTPUT", "port": h2}])
 
     def sfc_bypass(self):
         """바이패스: 중간 장비 무시하고 h1 -> h2 바로 연결"""
@@ -148,10 +151,17 @@ class SFCTab(ttk.Frame):
         h1 = int(self.var_h1.get())
         h2 = int(self.var_h2.get())
 
-        # 바로 h2 로 포워딩
-        self.add_flow(match={"in_port": h1}, actions=[{"port": h2}])
 
-    def sfc_get_flows(self):
+<< << << < HEAD
+       # 바로 h2 로 포워딩
+   self.add_flow(match={"in_port": h1}, actions=[{"port": h2}])
+== == == =
+   # 중간 단계(fw, nat) 무시하고 바로 목적지로 쏨
+   self.send_flow(match={"in_port": h1}, actions=[
+                  {"type": "OUTPUT", "port": h2}])
+>>>>>> > 031f204b74e2e41c96726a24027c29a6cc9e0778
+
+   def sfc_get_flows(self):
         """현재 스위치에 설치된 플로우 조회"""
         if not HAS_REQ:
             return
